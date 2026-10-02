@@ -627,8 +627,13 @@ with tab_history:
         )
 
 
+from datetime import date
+import pandas as pd
+import requests
+import streamlit as st
+
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------#
-#############################-------------------------- Production Stock Configuration--------------------------------##############################################
+# ############################-------------------------- Production Stock Configuration--------------------------------##############################################
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------#
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDEYO6Q6NaLyMv9TccVNHcM4jYCpFv9Mi95EaBAw6RYUcTz7JMzn3jjoNT1Jn43zth/exec"
 
@@ -636,10 +641,7 @@ st.set_page_config(page_title="Production Stock Ledger", layout="wide")
 
 
 def clean_date_column(df, col_name="Date"):
-    """
-    Converts Apps Script ISO UTC timestamps (e.g. '2026-08-31T18:30:00.000Z') 
-    back to Asia/Kolkata (IST) DD/MM/YYYY format.
-    """
+    """Converts Apps Script ISO UTC timestamps back to Asia/Kolkata (IST) DD/MM/YYYY format."""
     if df.empty or col_name not in df.columns:
         return df
 
@@ -673,7 +675,7 @@ def clean_date_column(df, col_name="Date"):
     return df
 
 
-#@st.cache_data(ttl=5)
+# @st.cache_data(ttl=5)
 def fetch_data():
     try:
         response = requests.get(WEB_APP_URL, timeout=20).json()
@@ -729,10 +731,12 @@ master_df, history_df = fetch_data()
 st.markdown("---")
 st.subheader("📦 Production Stock Tracker")
 
-tab1, tab2, tab3 = st.tabs(["⚡ Record Entry", "📋 Master Stock", "📜 History Log"])
+tab1, tab2, tab3 = st.tabs(
+    ["⚡ Record Entry", "📋 Master Stock", "📜 History Log"]
+)
 
 # ------------------------------------------------------
-# Tab 1: Live Interactive Record Entry (No st.form)
+# Tab 1: Live Interactive Record Entry
 # ------------------------------------------------------
 with tab1:
     st.subheader("Add Production Record")
@@ -740,7 +744,9 @@ with tab1:
     entry_date = st.date_input("Select Entry Date *", value=date.today())
 
     avail_companies = (
-        sorted(list(set(master_df["Company"].dropna().astype(str).str.strip())))
+        sorted(
+            list(set(master_df["Company"].dropna().astype(str).str.strip()))
+        )
         if not master_df.empty and "Company" in master_df.columns
         else []
     )
@@ -761,7 +767,11 @@ with tab1:
         final_company = sel_company
         comp_matched_df = master_df[master_df["Company"] == sel_company]
         avail_products = sorted(
-            list(set(comp_matched_df["Product"].dropna().astype(str).str.strip()))
+            list(
+                set(
+                    comp_matched_df["Product"].dropna().astype(str).str.strip()
+                )
+            )
         )
     else:
         final_company = ""
@@ -791,6 +801,8 @@ with tab1:
     default_cat = None
     default_rule = ""
     default_rate = None
+    default_size_h = ""
+    default_size_w = ""
 
     if (
         final_company
@@ -807,6 +819,9 @@ with tab1:
             default_rule = str(
                 matched_item.iloc[0].get("Sheet to Box or Inner", "")
             )
+            default_size_h = str(matched_item.iloc[0].get("Sheet Size (H)", ""))
+            default_size_w = str(matched_item.iloc[0].get("Sheet Size (W)", ""))
+
             raw_rate = str(matched_item.iloc[0].get("Rate (Rs)", ""))
             try:
                 default_rate = float(raw_rate.split("/")[0].strip())
@@ -836,6 +851,21 @@ with tab1:
             value=None,
             placeholder="Enter sheet quantity",
         )
+
+        # Added Sheet Size Fields
+        col_dim1, col_dim2 = st.columns(2)
+        with col_dim1:
+            sheet_size_h = st.text_input(
+                "Sheet Size (H)",
+                value=default_size_h,
+                placeholder="e.g. 10",
+            )
+        with col_dim2:
+            sheet_size_w = st.text_input(
+                "Sheet Size (W)",
+                value=default_size_w,
+                placeholder="e.g. 15",
+            )
 
     with col_f2:
         rate_val = st.number_input(
@@ -888,6 +918,8 @@ with tab1:
                 "Product": final_product.strip(),
                 "PCS": int(pcs_val),
                 "Category": category_val,
+                "Sheet Size (H)": sheet_size_h.strip(),
+                "Sheet Size (W)": sheet_size_w.strip(),
                 "SheetToBox": sheet_to_box_val.strip(),
                 "TotalBox/Inner/Sheet": float(
                     total_box_val if total_box_val is not None else 0.0
