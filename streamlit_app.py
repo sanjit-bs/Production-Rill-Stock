@@ -635,7 +635,7 @@ import streamlit as st
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------#
 # ############################-------------------------- Production Stock Configuration--------------------------------##############################################
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------#
-WEB_APP_URL = "https://script.google.com/macros/s/AKfycbybYW16WaYggOVYKmEBoStXWQGQaATuAT-8ERA_MzBLfaXKqbaGBTjhNYIGlaw2Q4XH/exec"
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRLpoxmO3XiVgRovNu1nF0E_6MHEpghvZF5spTTOp0vvyt-rgXWzgg18-dh8_99Efx/exec"
 
 st.set_page_config(page_title="Production Stock Ledger", layout="wide")
 
