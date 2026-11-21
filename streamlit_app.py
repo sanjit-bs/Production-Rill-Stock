@@ -626,15 +626,10 @@ with tab_history:
             hide_index=True,
         )
 
-
-from datetime import date
-import pandas as pd
-import requests
-import streamlit as st
-
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------#
 # ############################-------------------------- Production Stock Configuration--------------------------------##############################################
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRLpoxmO3XiVgRovNu1nF0E_6MHEpghvZF5spTTOp0vvyt-rgXWzgg18-dh8_99Efx/exec"
 
 st.set_page_config(page_title="Production Stock Ledger", layout="wide")
@@ -741,7 +736,7 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
     st.subheader("Add Production Record")
 
-    entry_date = st.date_input("Select Entry Date *", value=date.today())
+    entry_date = st.date_input("Select Entry Date *", value=date.today(), format="DD/MM/YYYY")
 
     avail_companies = (
         sorted(
@@ -803,6 +798,7 @@ with tab1:
     default_rate = None
     default_size_h = ""
     default_size_w = ""
+    default_remark = ""
 
     if (
         final_company
@@ -821,6 +817,7 @@ with tab1:
             )
             default_size_h = str(matched_item.iloc[0].get("Sheet Size (H)", ""))
             default_size_w = str(matched_item.iloc[0].get("Sheet Size (W)", ""))
+            default_remark = str(matched_item.iloc[0].get("Remark", ""))
 
             raw_rate = str(matched_item.iloc[0].get("Rate (Rs)", ""))
             try:
@@ -852,7 +849,7 @@ with tab1:
             placeholder="Enter sheet quantity",
         )
 
-        # Added Sheet Size Fields
+        # Sheet Size Fields
         col_dim1, col_dim2 = st.columns(2)
         with col_dim1:
             sheet_size_h = st.text_input(
@@ -898,6 +895,11 @@ with tab1:
             value=calc_charge,
             placeholder="Auto-calculated or enter value",
         )
+        remark_val = st.text_input(
+            "Remark",
+            value=default_remark,
+            placeholder="Optional notes / batch details",
+        )
 
     st.write("")
     submitted = st.button("Submit Production Entry", type="primary")
@@ -928,6 +930,7 @@ with tab1:
                 "TotalCharge": float(
                     total_charge_val if total_charge_val is not None else 0.0
                 ),
+                "Remark": remark_val.strip(),
             }
 
             with st.spinner("Writing to Google Sheets..."):
@@ -965,6 +968,6 @@ with tab2:
 with tab3:
     st.subheader("📜 Production History Log (Production_Stock_H)")
     if not history_df.empty:
-        st.dataframe(history_df, use_container_width=True, hide_index=True)
+        st.dataframe(history_df.iloc[::-1], use_container_width=True, hide_index=True)
     else:
         st.info("No history log records available.")
